@@ -21,14 +21,14 @@ contract SubjectAttribute {
     }
     
     // VARIABLES
-    address admin;
+    address admin; //Needs To add authorities
     uint256 num_subjects;
     BloomFilter filter;
     address[] users;
 
     mapping (address => Subject) public subjects;
 
-    //Admin Only
+    //Admin Only ------ Note: Later will be changed to onlyAuthorities()
     modifier admin_only(){
         require(msg.sender == admin);
         _;
@@ -41,7 +41,7 @@ contract SubjectAttribute {
 
 
     constructor() {
-        admin = msg.sender;
+        admin = msg.sender;  //onlyAuthorities
         num_subjects = 0;
         filter.bitmap = 0;
         filter.hash_count = 5;
