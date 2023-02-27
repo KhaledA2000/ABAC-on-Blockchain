@@ -6,7 +6,7 @@ contract ObjectAttributes {
     struct Object {
 
         string location;
-        string time;
+        string Type;
 
     }
 
@@ -15,7 +15,7 @@ contract ObjectAttributes {
     uint8 hash_count; }
 
     // local variables
-    address admin;
+    mapping(address => bool) public authorities;
     uint256 num_objects;
     BloomFilter filter;
     address[] users;
@@ -24,35 +24,35 @@ contract ObjectAttributes {
     mapping (address => Object) public objects;
 
 
-    //Admin Only
-     modifier admin_only() {
-    require(msg.sender == admin);
-    _; 
+    //Authorities Only
+    modifier authorities_only(){
+        require(authorities[msg.sender] = true);
+        _;
     }
 
     constructor() {
-    admin = msg.sender;
+    authorities[msg.sender] = true;
     num_objects = 0;
     filter.bitmap = 0;
     filter.hash_count = 5;
     }
 
     // Events
-    event NewObjectAdded(address obj_addr, string location, string time);
+    event NewObjectAdded(address obj_addr, string location, string Type);
 
 
     //Adding an Object
-    function add_object (address obj_addr, string[2] memory objects_arg) public admin_only() {
+    function add_object (address obj_addr, string[2] memory objects_arg) public authorities_only() {
 
         num_objects++;
 
         objects[obj_addr].location = objects_arg[0];
-        objects[obj_addr].time = objects_arg[1];
+        objects[obj_addr].Type = objects_arg[1];
 
 
         add_bitmap(obj_addr);
 
-        emit NewObjectAdded(obj_addr, objects[obj_addr].location, objects[obj_addr].time);
+        emit NewObjectAdded(obj_addr, objects[obj_addr].location, objects[obj_addr].Type);
         
         }
 
