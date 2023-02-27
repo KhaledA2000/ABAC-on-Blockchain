@@ -21,16 +21,16 @@ contract SubjectAttribute {
     }
     
     // VARIABLES
-    address admin; //Needs To add authorities
+    mapping(address => bool) public authorities;
     uint256 num_subjects;
     BloomFilter filter;
     address[] users;
 
     mapping (address => Subject) public subjects;
 
-    //Admin Only ------ Note: Later will be changed to onlyAuthorities()
-    modifier admin_only(){
-        require(msg.sender == admin);
+    //Authorities Only
+    modifier authorities_only(){
+        require(authorities[msg.sender] = true);
         _;
     }
 
@@ -41,7 +41,7 @@ contract SubjectAttribute {
 
 
     constructor() {
-        admin = msg.sender;  //onlyAuthorities
+        authorities[msg.sender] = true;
         num_subjects = 0;
         filter.bitmap = 0;
         filter.hash_count = 5;
@@ -50,7 +50,7 @@ contract SubjectAttribute {
     event NewSubjectAdded(address sub_addr, string sub);
     event SubjectChanged(address sub_addr);
 
-    function addSubject (address sub_addr, string[4] memory subject_arg) public admin_only() {
+    function addSubject (address sub_addr, string[4] memory subject_arg) public authorities_only() {
 
         num_subjects++;
         subjects[sub_addr].state = SubjectState.Active;
@@ -121,7 +121,7 @@ contract SubjectAttribute {
     )
     /**MODIFIERS**/
         public
-        admin_only()
+        authorities_only()
         sub_active(sub_addr)
 
     {
