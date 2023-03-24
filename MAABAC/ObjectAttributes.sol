@@ -6,7 +6,7 @@ contract ObjectAttributes {
     struct Object {
 
         string location;
-        string Type;
+        string date;
 
     }
 
@@ -38,7 +38,7 @@ contract ObjectAttributes {
     }
 
     // Events
-    event NewObjectAdded(address obj_addr, string location, string Type);
+    event NewObjectAdded(address obj_addr, string location, string date);
 
 
     //Adding an Object
@@ -47,12 +47,12 @@ contract ObjectAttributes {
         num_objects++;
 
         objects[obj_addr].location = objects_arg[0];
-        objects[obj_addr].Type = objects_arg[1];
+        objects[obj_addr].date = objects_arg[1];
 
 
         add_bitmap(obj_addr);
 
-        emit NewObjectAdded(obj_addr, objects[obj_addr].location, objects[obj_addr].Type);
+        emit NewObjectAdded(obj_addr, objects[obj_addr].location, objects[obj_addr].date);
         
         }
 
