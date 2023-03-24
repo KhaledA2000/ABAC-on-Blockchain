@@ -126,8 +126,8 @@ contract AccessControl {
         // Send Subject and Object info to Policy Management contract
         // and get list of policies relating to Subject and Object
         PolicyManagement policy_contract = PolicyManagement(policy_address);
-        policy_contract.match_Policies([sub_arg.name, sub_arg.username, sub_arg.department, sub_arg.position],
-            [obj_arg.location, obj_arg.date], obj_addr);
+        policy_contract.match_policies(sub_arg.name, sub_arg.username, sub_arg.department, sub_arg.position,
+            obj_arg.location, obj_arg.date, obj_addr);
 
          
 
