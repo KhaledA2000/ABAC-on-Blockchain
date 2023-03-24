@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
-import "contracts/SubjectAttribute.sol";
-import "contracts/ObjectAttribute.sol";
-import "contracts/PolicyManagement.sol";
+import "@KhaledA2000/ABAC-Blockchain/blob/main/MAABAC/ObjectAttributes.sol";
+import "@KhaledA2000/ABAC-Blockchain/blob/main/MAABAC/ObjectAttributes.sol";
+import "@KhaledA2000/ABAC-Blockchain/blob/main/MAABAC/PolicyManagement.sol";
 
 contract AccessControl {
 
