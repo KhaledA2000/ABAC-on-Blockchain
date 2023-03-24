@@ -1,5 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
+
 pragma solidity ^0.8.17;
+
+import "contracts/SubjectAttribute.sol";
+import "contracts/ObjectAttribute.sol";
+
 
 contract PolicyManagement {
     // ENUMS
@@ -8,13 +13,12 @@ contract PolicyManagement {
     // STRUCTS
     // Object Attributes
     struct Object {
-
         string location;
-        string Type;
-
+        string date;
     }
 
-    //Subject Attributes
+    // Subject Attributes
+    
     struct Subject {
 
         string name;
@@ -22,7 +26,7 @@ contract PolicyManagement {
         string department;
         string position;
     }
-
+    
     // Actions allowed
     struct Action{
         bool read;
@@ -30,6 +34,7 @@ contract PolicyManagement {
         bool execute;
     }
     
+   
 
     // Policy Structure
     // Contains sub/obj attribs, possible actions and context.
@@ -38,6 +43,7 @@ contract PolicyManagement {
         Subject subject;
         Object object;
         Action action;
+       
     }
 
     // EVENTS
@@ -53,281 +59,111 @@ contract PolicyManagement {
         _;
     }
 
-    //Variables
-    uint256 public total_policies;
+    // VARIABLES
     mapping(address => bool) private authorities;
+    uint256 public total_policies;
 
     Policy[]  policies;
     uint256[] ret_list;
 
-    //Functions
-    constructor(){
+    // FUNCTIONS
+    constructor() {
         authorities[msg.sender] = true;
         total_policies = 0;
     }
 
-
-    // Adds new policy with given subject, object and actions
-    // Checks if policy already exists, if it doesn't then adds new policy
-    // If policy already exists then emits DuplicatePolicyExist event
-    function policy_add(
-        /**SUBJECT ARGUMENTS**/
-        string[4] memory sub_arg,
-        /**OBJECT ARGUMENTS**/
-        string[2] memory obj_arg,
-        /**ACTION ARGUMENTS**/
-        bool[3] memory act_arg
-
-    )
-
-    //Modifiers
-        public
-        authorities_only()
-
-    {
-        if (find_exact_match_policy(sub_arg, obj_arg) == -1){
-            // Generating pol_id for new policy
-            uint256 pol_id = total_policies;
-            total_policies++;
-            // Pushing policy arguments into a new policy
-            policies.push(Policy(
-                PolicyState.Active,
-                Subject(sub_arg[0], sub_arg[1], sub_arg[2], sub_arg[3]), 
-                Object(obj_arg[0], obj_arg[1]), 
-                Action(act_arg[0], act_arg[1], act_arg[2])));
+     // VARIABLES
+    // These are contract addresses
+    address subject_address;
+    address object_address;
     
-            emit PolicyAdded(pol_id);
-        } else {
-            emit DuplicatePolicyExist(sub_arg, obj_arg);
-        }
 
-    }
+    // EVENTS that show either access was granted or denied
+    event AccessGrantedMsg (address sub_addr, address obj_addr, string message);
+    event AccessGranted (address sub_addr, address obj_addr);
+    event AccessDenied (address sub_addr, address obj_addr, string message);
+    
+    // These are only to show that authentication succeeded or 
+    // failed and wont be there in the productionized version of the smart contract
+    event AuthenticationSuccess (address sub_addr);
+    event AuthenticationFailure (address sub_addr);
 
-    // Deletes an existing policy with given subject and object attributes
-    // Finds exact match policy and then deletes the policy
-    // If no policy found then emits PolicyNotExist event
-    function policy_delete(
-        /**SUBJECT ARGUMENTS**/
-        string[4] memory sub_arg,
-        /**OBJECT ARGUMENTS**/
-        string[2] memory obj_arg
+
+// Main access control function
+    // Checks bloom filter for existance of subject
+    // Gets Subject/Object attributes from Subject/Object Contracts
+    // From all the actions decides whether to allow access to object
+    // Emits AccessGranted for successful access request
+    // Emits AccessDenied with failure message otherwise
+/*
+SUBJECT ATTRIBUTES:
+sAttr[0] = name
+sAttr[1] = username
+sAttr[2] = department
+sAttr[3] = position
+
+OBJECT ATTRIBUTES:
+oAttr[0] = location
+oAttr[1] = date
+
+
+
+*/
+    function match_Policies(
+        string[4] memory sAttr,
+        // uint256 sAge, 
+        string[2] memory oAttr,
+        address obj_addr
     )
-
-    //Modifiers 
-    public
-    authorities_only()
-
+        /**MODIFIERS**/
+        public
     {
-         int pol_id = find_exact_match_policy(sub_arg, obj_arg);
+
+        // Integer used for defining access control
+        uint8 access = 0;
+
+        // Check for policy matches which are hardcoded for now
+        // Admins would be able to add polcies dynamically later on
+
+        if (keccak256(abi.encodePacked(oAttr[0])) == keccak256(abi.encodePacked("CGI")) && 
+        keccak256(abi.encodePacked(sAttr[2])) == keccak256(abi.encodePacked("blockchain"))) {
+          access = 1;
+        } else if (keccak256(abi.encodePacked(oAttr[0])) == keccak256(abi.encodePacked("CGI")) && 
+        keccak256(abi.encodePacked(sAttr[2])) != keccak256(abi.encodePacked("blockchain"))) {
+            access = 2;
+        } else if (keccak256(abi.encodePacked(oAttr[0])) != keccak256(abi.encodePacked("CGI")) && 
+        keccak256(abi.encodePacked(sAttr[2])) == keccak256(abi.encodePacked("blockchain"))) {
+            access = 3;
+        } else if (keccak256(abi.encodePacked(oAttr[0])) != keccak256(abi.encodePacked("CGI")) && 
+        keccak256(abi.encodePacked(sAttr[2])) != keccak256(abi.encodePacked("blockchain"))) {
+            access = 4;
+        } else if (keccak256(abi.encodePacked(oAttr[0])) == keccak256(abi.encodePacked("04302023"))){
+            access = 5;
+        } else if  (keccak256(abi.encodePacked(oAttr[0])) == keccak256(abi.encodePacked("CGI")) && 
+        keccak256(abi.encodePacked(sAttr[2])) == keccak256(abi.encodePacked("HR Manager"))){
+            access = 6;
+        }
+        else {
+            access = 7;
+        }
         
-        // check to see if policy exists
-        // if it does then pop that policy out of policies
-        // if not then emit event PolicyNotExist
-        if (pol_id != -1){
-            policies[uint256(pol_id)] = policies[policies.length - 1];
-            policies.pop();
-            total_policies--;
-            emit PolicyDeleted(uint256(pol_id));
-        } else {
-            emit PolicyNotExist(sub_arg, obj_arg);
-        }
-    }
-
-    // Suspends a given policy using pol_id
-    // Use find_exact_match_policy function to find pol_id
-    function policy_suspend(
-        /**POLICY ID**/
-        uint256 pol_id
-    )
-        /**MODIFIERS**/
-        public
-        authorities_only()
-    {
-        policies[pol_id].state = PolicyState.Suspended;
-    }
-    
-    // Reactivates an already suspended policy using pol_id
-    // Use find_exact_match_policy function to find pol_id
-    function policy_reactivate(
-        /**POLICY ID**/
-        uint256 pol_id
-    )
-        /**MODIFIERS**/
-        public
-        authorities_only()
-    {
-        policies[pol_id].state = PolicyState.Active;
-    }
-
-
-    // Gives policy information using pol_id
-    // To be used by find_match_policy function to iterate over ret_list
-    function get_policy(
-        /**POLICY ID**/
-        uint256 pol_id
-    )
-        /**MODIFIERS**/
-        view
-        public
-        returns (Policy memory)
-    {
-        return policies[pol_id];
-    }
-
-
-    // Updates already existing policy with new subject/object/action arguments
-    // Only updates action and context fields and cannot update subject/object arguments
-    // Note: To make a policy with empty fields for object and subject make new
-    // policy using policy_add function
-    // If policy doesn't exist then emits PolicyNotExist event
-    function policy_update(
-        /**SUBJECT ARGUMENTS**/
-        string[4] memory sub_arg,
-        /**OBJECT ARGUMENTS**/
-        string[2] memory obj_arg,
-        /**ACTION ARGUMENTS**/
-        bool[3] memory act_arg
-    )
-
-        //**Modifiers**//
-        public
-        authorities_only()
-    {
-        // Get pol_id from find_exact_match_policy fucntion
-        int pol_id = find_exact_match_policy(sub_arg, obj_arg);
-        
-        if (pol_id != -1){
-            require(policies[uint256(pol_id)].state == PolicyState.Active);
-            
-            // Change Actions Permitted
-            policies[uint256(pol_id)].action.read = act_arg[0];
-            policies[uint256(pol_id)].action.write = act_arg[1];
-            policies[uint256(pol_id)].action.execute = act_arg[2];
-            emit PolicyChanged(uint256(pol_id));
-        } else {
-            emit PolicyNotExist(sub_arg, obj_arg);
-        }
-    }
-
-
-    // This Function checks every policy in the policies list/array and returns the first
-    // element that EXACTLY MATCHES the given arguments
-    // ELSE: it returns -1 if none were found
-    function find_exact_match_policy (
-        /**SUBJECT ARGUMENTS**/
-        string[4] memory sub_arg,
-        /**OBJECT ARGUMENTS**/
-        string[2] memory obj_arg
-    )
-        /**MODIFIERS**/
-        view
-        public /**LATER CHANGE TO INTERNAL**/
-        returns (int)
-    {
-        uint256 count;
-        int ret = -1;
-        for (count = 0; count < total_policies; count++){
-            //Subject Comparison
-            if (keccak256(abi.encodePacked(policies[count].subject.name))          != keccak256(abi.encodePacked(sub_arg[0]))) continue;
-            if (keccak256(abi.encodePacked(policies[count].subject.username))      != keccak256(abi.encodePacked(sub_arg[1]))) continue;
-            if (keccak256(abi.encodePacked(policies[count].subject.department))          != keccak256(abi.encodePacked(sub_arg[2]))) continue;
-            if (keccak256(abi.encodePacked(policies[count].subject.position))            != keccak256(abi.encodePacked(sub_arg[3]))) continue;
-            //Object Comparison
-            if (keccak256(abi.encodePacked(policies[count].object.location))              != keccak256(abi.encodePacked(obj_arg[0]))) continue;
-            if (keccak256(abi.encodePacked(policies[count].object.Type))               != keccak256(abi.encodePacked(obj_arg[1]))) continue;
-            // Set ret as count and end loop
-            ret = int(count);
-            break;
-        }
-        return ret;
-    }
-
-    // This Function checks every policy in the policies list/array and returns
-    // every element that somewhat matches the arguments given
-    // if the argument or policy field is "" empty string (Applies to All) then it checks next field
-    // returns empty list if no matches were found.
-    function find_match_policy(
-        /**SUBJECT ARGUMENTS**/
-        string[4] memory sub_arg,
-        /**OBJECT ARGUMENTS**/
-        string[2] memory obj_arg
-    )
-        /**MODIFIERS**/
-        external
-        returns(uint256 [] memory)
-
-    {
-        uint256 count;
-        uint256 i;
-        
-        // empty the ret_list before adding new elements
-        for (i = ret_list.length; i > 0; i--){
-            ret_list.pop();
-    
+        // Emit AccessGranted or AccessDenied events if subject has 
+        // access to that object depending on access code from above
+        if (access == 1) {
+          emit AccessGranted(msg.sender, obj_addr);
+        } else if (access == 2){
+            emit AccessDenied(msg.sender, obj_addr, "From CGI, but not blockchain department");
+        } else if (access == 3){
+            emit AccessDenied(msg.sender, obj_addr, "Not from CGI, but from some random blockchain department");
+        } else if (access == 4){
+            emit AccessDenied(msg.sender, obj_addr, "Neither from CGI, nor from blockchain department");
+        } else if (access == 5){
+            emit AccessDenied(msg.sender, obj_addr, "YOU ARE SUPPOSED TO BE ENJOYING THE HOLIDAY!");
+        } else if (access == 6){
+            emit AccessGrantedMsg(msg.sender, obj_addr, "Hello Manager, here are the employees info.");
+        } else if (access == 7){
+            emit AccessDenied(msg.sender, obj_addr, "Stop Bruteforcing!");
         }
 
-        // check every field for similarity subject/object
-        // if any field is empty on policy or sub/obj side then move to next field
-        // if any field doesn't match then continue to next policy
-        for (count = 0; count < total_policies; count++){
-
-            // Subject Comparison
-            if ((keccak256(abi.encodePacked(sub_arg[0])) != keccak256(abi.encodePacked(""))) && 
-                (keccak256(abi.encodePacked(policies[count].subject.name)) != keccak256(abi.encodePacked(""))) && 
-                (keccak256(abi.encodePacked(policies[count].subject.name)) != keccak256(abi.encodePacked(sub_arg[0])))) continue;
-
-            if ((keccak256(abi.encodePacked(sub_arg[1])) != keccak256(abi.encodePacked(""))) && 
-                (keccak256(abi.encodePacked(policies[count].subject.username)) != keccak256(abi.encodePacked(""))) && 
-                (keccak256(abi.encodePacked(policies[count].subject.username)) != keccak256(abi.encodePacked(sub_arg[1])))) continue;
-            
-            if ((keccak256(abi.encodePacked(sub_arg[2])) != keccak256(abi.encodePacked(""))) && 
-                (keccak256(abi.encodePacked(policies[count].subject.department)) != keccak256(abi.encodePacked(""))) && 
-                (keccak256(abi.encodePacked(policies[count].subject.department)) != keccak256(abi.encodePacked(sub_arg[2])))) continue;
-            
-            if ((keccak256(abi.encodePacked(sub_arg[3])) != keccak256(abi.encodePacked(""))) && 
-                (keccak256(abi.encodePacked(policies[count].subject.position)) != keccak256(abi.encodePacked(""))) && 
-                (keccak256(abi.encodePacked(policies[count].subject.position)) != keccak256(abi.encodePacked(sub_arg[3])))) continue;
-
-            // Object Comparison
-            if ((keccak256(abi.encodePacked(obj_arg[0])) != keccak256(abi.encodePacked(""))) && 
-                (keccak256(abi.encodePacked(policies[count].object.location)) != keccak256(abi.encodePacked(""))) && 
-                (keccak256(abi.encodePacked(policies[count].object.location)) != keccak256(abi.encodePacked(obj_arg[0])))) continue;
-
-            if ((keccak256(abi.encodePacked(obj_arg[1])) != keccak256(abi.encodePacked(""))) && 
-                (keccak256(abi.encodePacked(policies[count].object.Type)) != keccak256(abi.encodePacked(""))) && 
-                (keccak256(abi.encodePacked(policies[count].object.Type)) != keccak256(abi.encodePacked(obj_arg[1])))) continue;
-            
-            // Add entry to list of similar policies
-            ret_list.push(count);
-        }
-        return ret_list;
     }
-
-
-    // Function to get the ret_list to see which policies are similar
-    // to last query
-    // Returns empty list if query resulted in no matches
-    function get_ret_list (/**NO ARGS**/)
-        /**MODIFIERS**/
-        view
-        public
-        returns (uint256[] memory)
-    {
-        return ret_list;
-    }
-
-    
-
-    
-
-
 }
-
-
-            
-
-
-    
-
-
-
