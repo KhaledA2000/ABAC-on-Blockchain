@@ -94,12 +94,18 @@ contract PolicyManagement {
         string memory s_position,
         string memory o_location,
         string memory o_date,
-        address obj_addr
+        address obj_addr,
+        address sub_addr
+        
+
+
     )   
         public 
         
     {
-        uint8 access = 0;
+        bool accessGranted = false;
+
+        
         for (uint256 i = 0; i < policies.length; i++) {
             Policy storage policy = policies[i];
             if (
@@ -109,22 +115,20 @@ contract PolicyManagement {
                 keccak256(abi.encodePacked(policy.subject.position)) == keccak256(abi.encodePacked(s_position)) &&
                 keccak256(abi.encodePacked(policy.object.location)) == keccak256(abi.encodePacked(o_location)) &&
                 keccak256(abi.encodePacked(policy.object.date)) == keccak256(abi.encodePacked(o_date))
-            ) {access = 1; }
+            ) {
+            accessGranted = true;
+            break;
+            }
 
-            else {access = 2;}
-            
-        }
-        if (access == 1) {
-          emit AccessGranted(msg.sender, obj_addr, "Welcome!");
-        }
-        else if (access == 2){
-            emit AccessDenied(msg.sender, obj_addr, "Acecess Denied");
+
         }
         
-
-       
-
-       
+        if (accessGranted) {
+        emit AccessGranted(sub_addr, obj_addr, "Access granted.");
+        } else {
+        emit AccessDenied(sub_addr, obj_addr, "Access denied.");
+        }
+        
 
     }
 
