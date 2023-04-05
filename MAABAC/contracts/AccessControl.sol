@@ -81,12 +81,12 @@ contract AccessControl {
     {
         // Check Bloom Filter for existance of subject
         SubjectAttribute subject_contract = SubjectAttribute(subject_address);
-        if(!subject_contract.check_bitmap(msg.sender)) {
-            emit AccessDenied(msg.sender, obj_addr, "Subject not found.");
-            emit AuthenticationFailure(msg.sender);
+        if(!subject_contract.check_bitmap(sub_addr)) {
+            emit AccessDenied(sub_addr, obj_addr, "Subject not found.");
+            emit AuthenticationFailure(sub_addr);
             return;
         } else {
-            emit AuthenticationSuccess(msg.sender);
+            emit AuthenticationSuccess(sub_addr);
         }
 
         // Get subject info
