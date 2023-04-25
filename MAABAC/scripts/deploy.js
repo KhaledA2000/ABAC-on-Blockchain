@@ -1,13 +1,12 @@
 const { ethers } = require("hardhat");
 
-async function main() {
+async function main() { 
     // Get deployer account
     const [deployer] = await ethers.getSigners();
     console.log('Deploying contracts with the account: ' + deployer.address); 
 
     // Deployer's Balance
     console.log("Account balance:", (await deployer.getBalance()).toString());
-
 
     // Deploy First
     const Subject = await ethers.getContractFactory('SubjectAttribute');
@@ -17,20 +16,20 @@ async function main() {
     const Object = await ethers.getContractFactory('ObjectAttributes');
     const object = await Object.deploy();
 
-
     // Deploy Third
-    const Policy = await ethersgetContractFactory('PolicyManagement');
+    const Policy = await ethers.getContractFactory('PolicyManagement');
     const policy = await Policy.deploy();
 
-    // Deploy Forth
+    // Deploy Fourth 
     const Access = await ethers.getContractFactory('AccessControl');
-    const access = await Access.deploy(subject.address, object.address);
+    const access = await Access.deploy(subject.address, object.address, policy.address );
 
 
     console.log( "Subject Contract: " + subject.address );
     console.log( "Object Contract: " + object.address ); 
     console.log( "Policy Contract: " + policy.address );
     console.log( "Access Contract: " + access.address ); 
+
 }
 
 main()
