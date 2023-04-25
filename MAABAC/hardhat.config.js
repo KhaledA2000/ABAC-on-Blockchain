@@ -4,17 +4,31 @@
 
 require('dotenv').config();
 require("@nomiclabs/hardhat-ethers");
+require("@nomiclabs/hardhat-etherscan");
 
-const { API_URL, PRIVATE_KEY } = process.env;
+
 
 module.exports = {
-   solidity: "0.8.17",
-   defaultNetwork: "goerli",
+   defaultNetwork: "polygon_mumbai",
    networks: {
-      hardhat: {},
-      goerli: {
-         url: API_URL,
-         accounts: [`0x${PRIVATE_KEY}`]
-      }
+     hardhat: {
+     },
+     polygon_mumbai: {
+       url: "https://rpc-mumbai.maticvigil.com",
+       accounts: [process.env.PRIVATE_KEY]
+     }
    },
+   etherscan: {
+     apiKey: process.env.POLYGONSCAN_API_KEY
+   },
+   solidity: {
+     version: "0.8.17",
+     settings: {
+       optimizer: {
+         enabled: true,
+         runs: 200
+       }
+     }
+   },
+  
 }
